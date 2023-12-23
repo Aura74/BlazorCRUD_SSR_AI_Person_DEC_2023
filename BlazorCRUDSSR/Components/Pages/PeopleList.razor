@@ -1,0 +1,75 @@
+﻿@page "/peopleList"
+@inject DataContext Context
+@inject NavigationManager NavigationManager
+@attribute [StreamRendering]
+
+
+<PageTitle>People List</PageTitle>
+<h3>Person Listan</h3>
+<a href="/edit-person" class="btn btn-primary">Add A Person</a>
+
+@if (persons.Count == 0)
+{
+    <P><em>Loading People...</em></P>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Förnamn</th>
+                <th>Efternamn</th>
+                <th>E-post</th>
+                <th>Ort</th>
+                <th>År</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in persons)
+            {
+                <tr>
+                    <td>@p.FirstName</td>
+                    <td>@p.LastName</td>
+                    <td>@p.Email</td>
+                    <td>@p.Ort</td>
+                    <td>@p.BirthYear</td>
+                    <td><a class="btn btn-success" href="edit-person/@p.PersonId">Edit</a></td>
+                    <td>
+                        <form method="post" data-enhance
+                              @formname="@($"DeletePersonForm{p.PersonId}")"
+                              @onsubmit="() => DeletePerson(p.PersonId)">
+                            <button class="btn btn-danger">Delete</button>
+                            <AntiforgeryToken />
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+@code {
+    List<Person> persons = new List<Person>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        persons = await Context.Persons.ToListAsync();
+    }
+
+    async Task DeletePerson(int id)
+    {
+        var dbPerson = await Context.Persons.FindAsync(id);
+        if (dbPerson is not null)
+        {
+            Context.Remove(dbPerson);
+            await Context.SaveChangesAsync();
+            //NavigationManager.NavigateTo("/games");
+            persons = await Context.Persons.ToListAsync();
+        }
+    }
+}
+
